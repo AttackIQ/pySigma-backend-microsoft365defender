@@ -87,6 +87,34 @@ def test_microsoft_xdr_hashes_values_transformation(xdr_backend):
     assert xdr_backend.convert_rule(SigmaRule.from_yaml(yaml_rule)) == expected_result
 
 
+def test_microsoft_xdr_logonid_transformation(xdr_backend):
+    """Test that LogonId values use exact equality (==) instead of case-insensitive (=~)"""
+    yaml_rule = """
+        title: Elevated System Shell Spawned
+        status: test
+        logsource:
+            category: process_creation
+            product: windows
+        detection:
+            selection_shell:
+                Image|endswith:
+                    - '\\powershell.exe'
+                    - '\\cmd.exe'
+            selection_user:
+                User|contains: 'AUTHORI'
+                LogonId: '0x3e7'
+            condition: all of selection_*
+    """
+    expected_result = [
+        "DeviceProcessEvents\n"
+        '| where (FolderPath endswith "\\\\powershell.exe" or FolderPath endswith "\\\\cmd.exe") and '
+        '(AccountName contains "AUTHORI" and LogonId == 999)'  # 0x3e7 converted to decimal
+    ]
+
+    assert xdr_backend.convert(SigmaCollection.from_yaml(yaml_rule)) == expected_result
+    assert xdr_backend.convert_rule(SigmaRule.from_yaml(yaml_rule)) == expected_result
+
+
 def test_microsoft_xdr_process_creation_simple(xdr_backend):
     yaml_rule = """
         title: Test

@@ -33,6 +33,7 @@ from .mappings import (
 from .schema import MicrosoftXDRSchema
 from .tables import MICROSOFT_XDR_TABLES
 from .transformations import (
+    LogonIdValueTransformation,
     ParentImageValueTransformation,
     SplitDomainUserTransformation,
     XDRHashesValuesTransformation,
@@ -124,6 +125,12 @@ def _create_replacement_items():
             identifier="microsoft_xdr_hashes_field_values",
             transformation=XDRHashesValuesTransformation(),
             field_name_conditions=[IncludeFieldCondition(["Hashes"])],
+        ),
+        # Transform LogonId values to ensure exact matching (== instead of =~)
+        ProcessingItem(
+            identifier="microsoft_xdr_logonid_value_transform",
+            transformation=LogonIdValueTransformation(),
+            field_name_conditions=[IncludeFieldCondition(["LogonId", "InitiatingProcessLogonId"])],
         ),
         # Processing item to essentially ignore initiated field
         ProcessingItem(

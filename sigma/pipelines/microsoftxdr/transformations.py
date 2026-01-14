@@ -2,7 +2,7 @@ from typing import Iterable, Optional, Union
 
 from sigma.processing.transformations.base import DetectionItemTransformation, ValueTransformation
 from sigma.rule import SigmaDetection, SigmaDetectionItem
-from sigma.types import SigmaString, SigmaType
+from sigma.types import SigmaString, SigmaType, SigmaNumber
 
 from ..kusto_common.transformations import BaseHashesValuesTransformation
 
@@ -81,3 +81,28 @@ class XDRHashesValuesTransformation(BaseHashesValuesTransformation):
 
     def __init__(self):
         super().__init__(valid_hash_algos=["MD5", "SHA1", "SHA256"], field_prefix="")
+
+
+class LogonIdValueTransformation(ValueTransformation):
+    """
+    Custom ValueTransformation for LogonId fields to ensure exact string matching.
+    LogonId values like "0x3e7" should use exact equality (==) not case-insensitive (=~).
+    This transformation adds a modifier to mark the value for exact matching.
+    """
+
+    def apply_value(self, field: str, val: SigmaType) -> Optional[Union[SigmaType, Iterable[SigmaType]]]:
+        # Return the value as a SigmaNumber if it's a numeric string or hex value
+        # This forces the backend to use == instead of =~
+        value_str = val.to_plain()
+        
+        # Convert hex strings to decimal for numeric comparison
+        if isinstance(value_str, str) and value_str.lower().startswith("0x"):
+            try:
+                # Convert hex to decimal integer
+                numeric_value = int(value_str, 16)
+                return SigmaNumber(numeric_value)
+            except ValueError:
+                # If conversion fails, return as-is
+                pass
+        
+        return val
