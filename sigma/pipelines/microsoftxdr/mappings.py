@@ -28,6 +28,9 @@ CATEGORY_TO_TABLE_MAPPINGS = {
     "registry_event": "DeviceRegistryEvents",
     "registry_set": "DeviceRegistryEvents",
     "network_connection": "DeviceNetworkEvents",
+    "create_remote_thread": "DeviceEvents",
+    "pipe_created": "DeviceEvents",
+    "driver_load": "DeviceEvents",
 }
 
 EVENTID_CATEGORY_TO_TABLE_MAPPINGS = {
@@ -152,6 +155,20 @@ MICROSOFT_XDR_FIELD_MAPPINGS = MicrosoftXDRFieldMappings(
             "Details": "RegistryValueData",
             "User": "InitiatingProcessAccountName",
             "ObjectName": "RegistryKey",
+        },
+        "DeviceEvents": {
+            # create_remote_thread, Sysmon EventID 8 -> DeviceEvents table
+            # ActionType will be filtered in query: ActionType startswith "CreateRemoteThread"
+            # Note: TargetImage is handled by SplitTargetImageTransformation to split into FolderPath and FileName
+            "SourceImage": "InitiatingProcessFolderPath",  # Process that created the remote thread
+            "SourceProcessId": "InitiatingProcessId",
+            "TargetProcessId": "ProcessId",
+            "SourceUser": "InitiatingProcessAccountName",
+            "User": "InitiatingProcessAccountName",
+            # pipe_created, Sysmon EventID 17/18 -> DeviceEvents table
+            # ActionType == "NamedPipeEvent"
+            # PipeName is in AdditionalFields.PipeName and needs special handling
+            # PipeName field will be transformed to use the SanitizedPipeName column
         },
     },
     generic_mappings={

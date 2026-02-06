@@ -609,4 +609,3 @@ def test_kusto_wildcard_regex_with_backslashes(microsoft365defender_backend: Kus
         )
         == ['DeviceProcessEvents\n| where FolderPath matches regex "C:\\\\\\\\Windows.*\\\\\\\\process\\\\.exe"']
     )
-

@@ -176,6 +176,17 @@ pipeline = microsoft_xdr_pipeline(transform_parent_image=False)
 
 This argument allows fine-tuning of the ParentImage field mapping, which can be crucial for accurate rule conversion in certain scenarios. By default, it follows the behavior of mapping ParentImage to the parent process name, but setting it to `False` allows for mapping to the initiating process name instead.
 
+- `transform_image_to_original_file_name`: Controls Image field mapping behavior
+  - When set to `True`, maps Image to Image OR OriginalFileName
+  - When set to `False` (default), maps Image to Image only
+  - Useful for matching against the original filename even if the file was renamed
+  - Example usage:
+
+```python
+from sigma.pipelines.microsoftxdr import microsoft_xdr_pipeline
+pipeline = microsoft_xdr_pipeline(transform_image_to_original_file_name=True)
+```
+
 ### 🗃️ Custom Table Names (New in 0.3.0) (Beta)
 
 The `query_table` argument allows users to override table mappings and set custom table names.  This is useful for converting Sigma rules where the rule category does not easily map to the default table names.
