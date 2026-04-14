@@ -538,24 +538,38 @@ def test_azure_monitor_eventid_based_table_mapping(azure_backend):
 
 def test_azure_monitor_correlation_rule_compatibility(azure_backend):
     """
-    Test that the backend handles correlation rules gracefully (future compatibility).
-    Breaking Change #11 mentions SigmaCorrelationRule support.
+    Test that correlation rules include table and where prefix with pipeline-managed query table.
     """
-    # For now, just test that regular rules still work
     rule_yaml = """
-        title: Regular Rule
-        status: test
-        logsource:
-            category: process_creation
-            product: windows
-        detection:
-            sel:
-                CommandLine: whoami
-            condition: sel
-    """
+title: High-privilege group enumeration
+name: privileged_group_enumeration
+status: stable
+logsource:
+    category: process_creation
+    product: windows
+detection:
+    selection:
+        CommandLine: whoami
+        User: SYSTEM
+    condition: selection
+---
+title: Enumeration of multiple high-privilege groups by tools like BloodHound
+status: stable
+correlation:
+    type: value_count
+    rules:
+        - privileged_group_enumeration
+    group-by:
+        - SubjectUserName
+    timespan: 15m
+    condition:
+        gte: 1
+        field: CommandLine
+"""
 
     result = azure_backend.convert(SigmaCollection.from_yaml(rule_yaml))
     assert len(result) == 1
+    assert result[0].startswith("SecurityEvent\n| where ")
 
 
 def test_azure_monitor_pipeline_state_isolation():

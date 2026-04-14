@@ -16,10 +16,9 @@ def kusto_backend_no_pipeline():
 
 
 def test_kusto_and_expression(microsoft365defender_backend: KustoBackend):
-    assert (
-        microsoft365defender_backend.convert(
-            SigmaCollection.from_yaml(
-                """
+    assert microsoft365defender_backend.convert(
+        SigmaCollection.from_yaml(
+            """
             title: Test
             status: test
             logsource:
@@ -31,17 +30,14 @@ def test_kusto_and_expression(microsoft365defender_backend: KustoBackend):
                     User: valueB
                 condition: sel
         """
-            )
         )
-        == ['DeviceProcessEvents\n| where ProcessCommandLine =~ "valueA" and AccountName =~ "valueB"']
-    )
+    ) == ['DeviceProcessEvents\n| where ProcessCommandLine =~ "valueA" and AccountName =~ "valueB"']
 
 
 def test_kusto_or_expression(microsoft365defender_backend: KustoBackend):
-    assert (
-        microsoft365defender_backend.convert(
-            SigmaCollection.from_yaml(
-                """
+    assert microsoft365defender_backend.convert(
+        SigmaCollection.from_yaml(
+            """
             title: Test
             status: test
             logsource:
@@ -54,17 +50,14 @@ def test_kusto_or_expression(microsoft365defender_backend: KustoBackend):
                     User: valueB
                 condition: 1 of sel*
         """
-            )
         )
-        == ['DeviceProcessEvents\n| where ProcessCommandLine =~ "valueA" or AccountName =~ "valueB"']
-    )
+    ) == ['DeviceProcessEvents\n| where ProcessCommandLine =~ "valueA" or AccountName =~ "valueB"']
 
 
 def test_kusto_and_or_expression(microsoft365defender_backend: KustoBackend):
-    assert (
-        microsoft365defender_backend.convert(
-            SigmaCollection.from_yaml(
-                """
+    assert microsoft365defender_backend.convert(
+        SigmaCollection.from_yaml(
+            """
             title: Test
             status: test
             logsource:
@@ -80,20 +73,17 @@ def test_kusto_and_or_expression(microsoft365defender_backend: KustoBackend):
                         - valueB2
                 condition: sel
         """
-            )
         )
-        == [
-            'DeviceProcessEvents\n| where (ProcessCommandLine in~ ("valueA1", "valueA2")) and '
-            '(ProcessId in~ ("valueB1", "valueB2"))'
-        ]
-    )
+    ) == [
+        'DeviceProcessEvents\n| where (ProcessCommandLine in~ ("valueA1", "valueA2")) and '
+        '(ProcessId in~ ("valueB1", "valueB2"))'
+    ]
 
 
 def test_kusto_or_and_expression(microsoft365defender_backend: KustoBackend):
-    assert (
-        microsoft365defender_backend.convert(
-            SigmaCollection.from_yaml(
-                """
+    assert microsoft365defender_backend.convert(
+        SigmaCollection.from_yaml(
+            """
             title: Test
             status: test
             logsource:
@@ -108,20 +98,17 @@ def test_kusto_or_and_expression(microsoft365defender_backend: KustoBackend):
                     ProcessId: valueB2
                 condition: 1 of sel*
         """
-            )
         )
-        == [
-            'DeviceProcessEvents\n| where (ProcessCommandLine =~ "valueA1" and ProcessId =~ "valueB1") or '
-            '(ProcessCommandLine =~ "valueA2" and ProcessId =~ "valueB2")'
-        ]
-    )
+    ) == [
+        'DeviceProcessEvents\n| where (ProcessCommandLine =~ "valueA1" and ProcessId =~ "valueB1") or '
+        '(ProcessCommandLine =~ "valueA2" and ProcessId =~ "valueB2")'
+    ]
 
 
 def test_kusto_in_expression(microsoft365defender_backend: KustoBackend):
-    assert (
-        microsoft365defender_backend.convert(
-            SigmaCollection.from_yaml(
-                """
+    assert microsoft365defender_backend.convert(
+        SigmaCollection.from_yaml(
+            """
             title: Test
             status: test
             logsource:
@@ -135,20 +122,17 @@ def test_kusto_in_expression(microsoft365defender_backend: KustoBackend):
                         - valueC*
                 condition: sel
         """
-            )
         )
-        == [
-            'DeviceProcessEvents\n| where ProcessCommandLine in~ ("valueA", "valueB") or '
-            'ProcessCommandLine startswith "valueC"'
-        ]
-    )
+    ) == [
+        'DeviceProcessEvents\n| where ProcessCommandLine in~ ("valueA", "valueB") or '
+        'ProcessCommandLine startswith "valueC"'
+    ]
 
 
 def test_kusto_regex_query(microsoft365defender_backend: KustoBackend):
-    assert (
-        microsoft365defender_backend.convert(
-            SigmaCollection.from_yaml(
-                """
+    assert microsoft365defender_backend.convert(
+        SigmaCollection.from_yaml(
+            """
             title: Test
             status: test
             logsource:
@@ -162,21 +146,18 @@ def test_kusto_regex_query(microsoft365defender_backend: KustoBackend):
                     ProcessId: foo
                 condition: sel
         """
-            )
         )
-        == [
-            'DeviceProcessEvents\n| where (ProcessCommandLine matches regex "foo.*bar" or '
-            'ProcessCommandLine matches regex "-(W|R)\\\\s?(\\\\s|\\"|\')([0-9a-fA-F]{2}\\\\s?){2,20}(\\\\s|\\"|\')") and '
-            'ProcessId =~ "foo"'
-        ]
-    )
+    ) == [
+        'DeviceProcessEvents\n| where (ProcessCommandLine matches regex "foo.*bar" or '
+        'ProcessCommandLine matches regex "-(W|R)\\\\s?(\\\\s|\\"|\')([0-9a-fA-F]{2}\\\\s?){2,20}(\\\\s|\\"|\')") and '
+        'ProcessId =~ "foo"'
+    ]
 
 
 def test_kusto_cidr_query(microsoft365defender_backend: KustoBackend):
-    assert (
-        microsoft365defender_backend.convert(
-            SigmaCollection.from_yaml(
-                """
+    assert microsoft365defender_backend.convert(
+        SigmaCollection.from_yaml(
+            """
             title: Test
             status: test
             logsource:
@@ -187,17 +168,14 @@ def test_kusto_cidr_query(microsoft365defender_backend: KustoBackend):
                     SourceIp|cidr: 192.168.0.0/16
                 condition: sel
         """
-            )
         )
-        == ['DeviceNetworkEvents\n| where ipv4_is_in_range(LocalIP, "192.168.0.0/16")']
-    )
+    ) == ['DeviceNetworkEvents\n| where ipv4_is_in_range(LocalIP, "192.168.0.0/16")']
 
 
 def test_kusto_negation_basic(microsoft365defender_backend: KustoBackend):
-    assert (
-        microsoft365defender_backend.convert(
-            SigmaCollection.from_yaml(
-                r"""
+    assert microsoft365defender_backend.convert(
+        SigmaCollection.from_yaml(
+            r"""
             title: Test
             status: test
             logsource:
@@ -214,21 +192,18 @@ def test_kusto_negation_basic(microsoft365defender_backend: KustoBackend):
                         - 'notthis'
                 condition: selection and not filter
         """
-            )
         )
-        == [
-            'DeviceProcessEvents\n| where (FolderPath endswith "\\\\process.exe" and '
-            'ProcessCommandLine =~ "this") and '
-            '(not(ProcessCommandLine =~ "notthis"))'
-        ]
-    )
+    ) == [
+        'DeviceProcessEvents\n| where (FolderPath endswith "\\\\process.exe" and '
+        'ProcessCommandLine =~ "this") and '
+        '(not(ProcessCommandLine =~ "notthis"))'
+    ]
 
 
 def test_kusto_negation_contains(microsoft365defender_backend: KustoBackend):
-    assert (
-        microsoft365defender_backend.convert(
-            SigmaCollection.from_yaml(
-                r"""
+    assert microsoft365defender_backend.convert(
+        SigmaCollection.from_yaml(
+            r"""
             title: Test
             status: test
             logsource:
@@ -245,21 +220,18 @@ def test_kusto_negation_contains(microsoft365defender_backend: KustoBackend):
                         - '*notthis*'
                 condition: selection and not filter
         """
-            )
         )
-        == [
-            'DeviceProcessEvents\n| where (FolderPath endswith "\\\\process.exe" and '
-            'ProcessCommandLine contains "this") and '
-            '(not(ProcessCommandLine contains "notthis"))'
-        ]
-    )
+    ) == [
+        'DeviceProcessEvents\n| where (FolderPath endswith "\\\\process.exe" and '
+        'ProcessCommandLine contains "this") and '
+        '(not(ProcessCommandLine contains "notthis"))'
+    ]
 
 
 def test_kusto_grouping(microsoft365defender_backend: KustoBackend):
-    assert (
-        microsoft365defender_backend.convert(
-            SigmaCollection.from_yaml(
-                r"""
+    assert microsoft365defender_backend.convert(
+        SigmaCollection.from_yaml(
+            r"""
             title: Net connection logic test
             status: test
             logsource:
@@ -275,21 +247,18 @@ def test_kusto_grouping(microsoft365defender_backend: KustoBackend):
                         - '*anothersite.com*'
                 condition: selection
     """
-            )
         )
-        == [
-            'DeviceNetworkEvents\n| where (InitiatingProcessFolderPath endswith "\\\\powershell.exe" or '
-            'InitiatingProcessFolderPath endswith "\\\\pwsh.exe") and (RemoteUrl contains '
-            '"pastebin.com" or RemoteUrl contains "anothersite.com")'
-        ]
-    )
+    ) == [
+        'DeviceNetworkEvents\n| where (InitiatingProcessFolderPath endswith "\\\\powershell.exe" or '
+        'InitiatingProcessFolderPath endswith "\\\\pwsh.exe") and (RemoteUrl contains '
+        '"pastebin.com" or RemoteUrl contains "anothersite.com")'
+    ]
 
 
 def test_kusto_escape_cmdline_slash(microsoft365defender_backend: KustoBackend):
-    assert (
-        microsoft365defender_backend.convert(
-            SigmaCollection.from_yaml(
-                r"""
+    assert microsoft365defender_backend.convert(
+        SigmaCollection.from_yaml(
+            r"""
             title: Delete All Scheduled Tasks
             id: 220457c1-1c9f-4c2e-afe6-9598926222c1
             status: test
@@ -316,22 +285,19 @@ def test_kusto_escape_cmdline_slash(microsoft365defender_backend: KustoBackend):
                 - Unlikely
             level: high
         """
-            )
         )
-        == [
-            'DeviceProcessEvents\n| where FolderPath endswith "\\\\schtasks.exe" and '
-            '(ProcessCommandLine contains " /delete " and '
-            'ProcessCommandLine contains "/tn *" and '
-            'ProcessCommandLine contains " /f")'
-        ]
-    )
+    ) == [
+        'DeviceProcessEvents\n| where FolderPath endswith "\\\\schtasks.exe" and '
+        '(ProcessCommandLine contains " /delete " and '
+        'ProcessCommandLine contains "/tn *" and '
+        'ProcessCommandLine contains " /f")'
+    ]
 
 
 def test_kusto_cmdline_filters(microsoft365defender_backend: KustoBackend):
-    assert (
-        microsoft365defender_backend.convert(
-            SigmaCollection.from_yaml(
-                r"""
+    assert microsoft365defender_backend.convert(
+        SigmaCollection.from_yaml(
+            r"""
             title: New Firewall Rule Added Via Netsh.EXE
             id: cd5cfd80-aa5f-44c0-9c20-108c4ae12e3c
             status: test
@@ -366,26 +332,23 @@ def test_kusto_cmdline_filters(microsoft365defender_backend: KustoBackend):
                 - Software installations
             level: medium
             """
-            )
         )
-        == [
-            'DeviceProcessEvents\n| where ((FolderPath endswith "\\\\netsh.exe" or '
-            'ProcessVersionInfoOriginalFileName =~ "netsh.exe") and '
-            '(ProcessCommandLine contains " firewall " and ProcessCommandLine contains " add ")) and '
-            '(not(((ProcessCommandLine contains "advfirewall firewall add rule name=Dropbox dir=in action=allow '
-            '\\"program=" and ProcessCommandLine contains ":\\\\Program Files (x86)\\\\Dropbox\\\\Client\\\\Dropbox.exe\\" '
-            'enable=yes profile=Any") or (ProcessCommandLine contains "advfirewall firewall add rule name=Dropbox dir=in '
-            'action=allow \\"program=" and ProcessCommandLine contains ":\\\\Program Files\\\\Dropbox\\\\Client\\\\Dropbox.exe\\" '
-            'enable=yes profile=Any"))))'
-        ]
-    )
+    ) == [
+        'DeviceProcessEvents\n| where ((FolderPath endswith "\\\\netsh.exe" or '
+        'ProcessVersionInfoOriginalFileName =~ "netsh.exe") and '
+        '(ProcessCommandLine contains " firewall " and ProcessCommandLine contains " add ")) and '
+        '(not(((ProcessCommandLine contains "advfirewall firewall add rule name=Dropbox dir=in action=allow '
+        '\\"program=" and ProcessCommandLine contains ":\\\\Program Files (x86)\\\\Dropbox\\\\Client\\\\Dropbox.exe\\" '
+        'enable=yes profile=Any") or (ProcessCommandLine contains "advfirewall firewall add rule name=Dropbox dir=in '
+        'action=allow \\"program=" and ProcessCommandLine contains ":\\\\Program Files\\\\Dropbox\\\\Client\\\\Dropbox.exe\\" '
+        'enable=yes profile=Any"))))'
+    ]
 
 
 def test_kusto_sigmanumber_conversion(kusto_backend_no_pipeline: KustoBackend):
-    assert (
-        kusto_backend_no_pipeline.convert(
-            SigmaCollection.from_yaml(
-                """
+    assert kusto_backend_no_pipeline.convert(
+        SigmaCollection.from_yaml(
+            """
         title: Test
         status: test
         logsource:
@@ -395,17 +358,14 @@ def test_kusto_sigmanumber_conversion(kusto_backend_no_pipeline: KustoBackend):
                 EventID: 1
             condition: sel
     """
-            )
         )
-        == ["EventID == 1"]
-    )
+    ) == ["EventID == 1"]
 
 
 def test_kusto_sigmanumber_conversion_mixed_types(kusto_backend_no_pipeline: KustoBackend):
-    assert (
-        kusto_backend_no_pipeline.convert(
-            SigmaCollection.from_yaml(
-                r"""
+    assert kusto_backend_no_pipeline.convert(
+        SigmaCollection.from_yaml(
+            r"""
 title: ETW Logging Disabled In .NET Processes - Sysmon Registry
 id: bf4fc428-dcc3-4bbd-99fe-2422aeee2544
 related:
@@ -451,20 +411,17 @@ falsepositives:
     - Unknown
 level: high
     """
-            )
         )
-        == [
-            '(TargetObject endswith "SOFTWARE\\\\Microsoft\\\\.NETFramework\\\\ETWEnabled" and Details =~ "DWORD (0x00000000)") or ((TargetObject endswith "\\\\COMPlus_ETWEnabled" or '
-            'TargetObject endswith "\\\\COMPlus_ETWFlags") and (Details in~ ("0", "DWORD (0x00000000)")))'
-        ]
-    )
+    ) == [
+        '(TargetObject endswith "SOFTWARE\\\\Microsoft\\\\.NETFramework\\\\ETWEnabled" and Details =~ "DWORD (0x00000000)") or ((TargetObject endswith "\\\\COMPlus_ETWEnabled" or '
+        'TargetObject endswith "\\\\COMPlus_ETWFlags") and (Details in~ ("0", "DWORD (0x00000000)")))'
+    ]
 
 
 def test_kusto_exists_expression(microsoft365defender_backend: KustoBackend):
-    assert (
-        microsoft365defender_backend.convert(
-            SigmaCollection.from_yaml(
-                """
+    assert microsoft365defender_backend.convert(
+        SigmaCollection.from_yaml(
+            """
             title: Test Exists
             status: test
             logsource:
@@ -475,17 +432,14 @@ def test_kusto_exists_expression(microsoft365defender_backend: KustoBackend):
                     CommandLine|exists: true
                 condition: sel
         """
-            )
         )
-        == ["DeviceProcessEvents\n| where isnotempty(ProcessCommandLine)"]
-    )
+    ) == ["DeviceProcessEvents\n| where isnotempty(ProcessCommandLine)"]
 
 
 def test_kusto_not_exists_expression(microsoft365defender_backend: KustoBackend):
-    assert (
-        microsoft365defender_backend.convert(
-            SigmaCollection.from_yaml(
-                """
+    assert microsoft365defender_backend.convert(
+        SigmaCollection.from_yaml(
+            """
             title: Test Not Exists
             status: test
             logsource:
@@ -496,17 +450,15 @@ def test_kusto_not_exists_expression(microsoft365defender_backend: KustoBackend)
                     CommandLine|exists: false
                 condition: sel
         """
-            )
         )
-        == ["DeviceProcessEvents\n| where isempty(ProcessCommandLine)"]
-    )
+    ) == ["DeviceProcessEvents\n| where isempty(ProcessCommandLine)"]
+
 
 def test_kusto_wildcard_regex_multi_char(microsoft365defender_backend: KustoBackend):
     """Test multi-char wildcard (*) in middle of string converts to regex."""
-    assert (
-        microsoft365defender_backend.convert(
-            SigmaCollection.from_yaml(
-                """
+    assert microsoft365defender_backend.convert(
+        SigmaCollection.from_yaml(
+            """
             title: Test Wildcard Regex
             status: test
             logsource:
@@ -517,18 +469,15 @@ def test_kusto_wildcard_regex_multi_char(microsoft365defender_backend: KustoBack
                     Image: 'foo*bar'
                 condition: sel
         """
-            )
         )
-        == ['DeviceProcessEvents\n| where FolderPath matches regex "foo.*bar"']
-    )
+    ) == ['DeviceProcessEvents\n| where FolderPath matches regex "foo.*bar"']
 
 
 def test_kusto_wildcard_regex_single_char(microsoft365defender_backend: KustoBackend):
     """Test single-char wildcard (?) converts to regex dot."""
-    assert (
-        microsoft365defender_backend.convert(
-            SigmaCollection.from_yaml(
-                """
+    assert microsoft365defender_backend.convert(
+        SigmaCollection.from_yaml(
+            """
             title: Test Single Char Wildcard
             status: test
             logsource:
@@ -539,18 +488,15 @@ def test_kusto_wildcard_regex_single_char(microsoft365defender_backend: KustoBac
                     Image: 'foo?bar'
                 condition: sel
         """
-            )
         )
-        == ['DeviceProcessEvents\n| where FolderPath matches regex "foo.bar"']
-    )
+    ) == ['DeviceProcessEvents\n| where FolderPath matches regex "foo.bar"']
 
 
 def test_kusto_wildcard_regex_multiple(microsoft365defender_backend: KustoBackend):
     """Test multiple wildcards in string convert to regex."""
-    assert (
-        microsoft365defender_backend.convert(
-            SigmaCollection.from_yaml(
-                """
+    assert microsoft365defender_backend.convert(
+        SigmaCollection.from_yaml(
+            """
             title: Test Multiple Wildcards
             status: test
             logsource:
@@ -561,18 +507,15 @@ def test_kusto_wildcard_regex_multiple(microsoft365defender_backend: KustoBacken
                     Image: 'foo*bar*baz'
                 condition: sel
         """
-            )
         )
-        == ['DeviceProcessEvents\n| where FolderPath matches regex "foo.*bar.*baz"']
-    )
+    ) == ['DeviceProcessEvents\n| where FolderPath matches regex "foo.*bar.*baz"']
 
 
 def test_kusto_wildcard_regex_mixed(microsoft365defender_backend: KustoBackend):
     """Test mixed wildcards (? and *) convert to regex."""
-    assert (
-        microsoft365defender_backend.convert(
-            SigmaCollection.from_yaml(
-                """
+    assert microsoft365defender_backend.convert(
+        SigmaCollection.from_yaml(
+            """
             title: Test Mixed Wildcards
             status: test
             logsource:
@@ -583,18 +526,15 @@ def test_kusto_wildcard_regex_mixed(microsoft365defender_backend: KustoBackend):
                     Image: 'foo?bar*'
                 condition: sel
         """
-            )
         )
-        == ['DeviceProcessEvents\n| where FolderPath matches regex "foo.bar.*"']
-    )
+    ) == ['DeviceProcessEvents\n| where FolderPath matches regex "foo.bar.*"']
 
 
 def test_kusto_wildcard_regex_with_backslashes(microsoft365defender_backend: KustoBackend):
     r"""Test wildcards with escaped backslashes convert to regex with proper escaping."""
-    assert (
-        microsoft365defender_backend.convert(
-            SigmaCollection.from_yaml(
-                r"""
+    assert microsoft365defender_backend.convert(
+        SigmaCollection.from_yaml(
+            r"""
             title: Test Wildcards With Backslashes
             status: test
             logsource:
@@ -605,8 +545,45 @@ def test_kusto_wildcard_regex_with_backslashes(microsoft365defender_backend: Kus
                     Image: 'C:\Windows*\process.exe'
                 condition: sel
         """
-            )
         )
-        == ['DeviceProcessEvents\n| where FolderPath matches regex "C:\\\\\\\\Windows.*\\\\\\\\process\\\\.exe"']
-    )
+    ) == ['DeviceProcessEvents\n| where FolderPath matches regex "C:\\\\\\\\Windows.*\\\\\\\\process\\\\.exe"']
 
+
+def test_kusto_correlation_value_count_timespan_and_distinct_field(kusto_backend_no_pipeline: KustoBackend):
+    yaml_rule = """
+title: High-privilege group enumeration
+name: privileged_group_enumeration
+status: stable
+logsource:
+    product: windows
+    service: security
+detection:
+    selection:
+        EventID: 4799
+        CallerProcessId: 0x0
+        TargetUserName:
+            - Administrators
+            - Remote Desktop Users
+            - Remote Management Users
+            - Distributed COM Users
+    condition: selection
+---
+title: Enumeration of multiple high-privilege groups by tools like BloodHound
+status: stable
+correlation:
+    type: value_count
+    rules:
+        - privileged_group_enumeration
+    group-by:
+        - SubjectUserName
+    timespan: 15m
+    condition:
+        gte: 4
+        field: TargetUserName
+"""
+
+    assert kusto_backend_no_pipeline.convert(SigmaCollection.from_yaml(yaml_rule)) == [
+        'EventID == 4799 and CallerProcessId == 0 and (TargetUserName in~ ("Administrators", "Remote Desktop Users", "Remote Management Users", "Distributed COM Users"))\n'
+        "| summarize ValueCount = count_distinct(TargetUserName) by bin(TimeGenerated, 15m), SubjectUserName\n"
+        "| where ValueCount >= 4"
+    ]
