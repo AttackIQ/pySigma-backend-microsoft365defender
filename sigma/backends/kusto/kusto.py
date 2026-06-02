@@ -101,7 +101,7 @@ class KustoBackend(TextQueryBackend):
         "{field} {operator} {value}"  # Compare operation query as format string with placeholders {field}, {operator} and {value}
     )
     # Mapping between CompareOperators elements and strings used as replacement for {operator} in compare_op_expression
-    compare_operators: ClassVar[Dict[SigmaCompareExpression.CompareOperators, str]] = {
+    compare_operators: ClassVar[Dict[object, str]] = {
         SigmaCompareExpression.CompareOperators.LT: "<",
         SigmaCompareExpression.CompareOperators.LTE: "<=",
         SigmaCompareExpression.CompareOperators.GT: ">",
@@ -260,7 +260,7 @@ class KustoBackend(TextQueryBackend):
                     full_query = f"{full_query}\n{normalization}"
                 if auto_norm:
                     full_query = f"{full_query}\n{auto_norm}"
-                if table:
+                if table and not full_query.lstrip().startswith(table):
                     full_query = f"{table}\n| where {full_query}"
                 full_query = f'{full_query}\n| extend EventType = "{rule_id}"'
                 subquery_parts.append(f"(\n{full_query}\n)")
@@ -317,13 +317,14 @@ class KustoBackend(TextQueryBackend):
                     full_query = f"{full_query}\n{normalization}"
                 if auto_norm:
                     full_query = f"{full_query}\n{auto_norm}"
-                if table:
+                if table and not full_query.lstrip().startswith(table):
                     full_query = f"{table}\n| where {full_query}"
                 full_query = f'{full_query}\n| extend EventType = "{rule_id}", EventOrder = {idx}'
                 subquery_parts.append(f"(\n{full_query}\n)")
 
         search = "union\n" + ",\n".join(subquery_parts)
 
+        # Resolve group-by field names to the canonical (most-common) KQL column name
         groupby_fields = self._resolve_groupby_fields(rule)
         groupby = (", " + ", ".join(groupby_fields)) if groupby_fields else ""
         timespan = self._correlation_timespan_to_kql(rule.timespan)
@@ -467,7 +468,7 @@ class KustoBackend(TextQueryBackend):
                 full_query = query
                 if normalization:
                     full_query = f"{full_query}\n{normalization}"
-                if table:
+                if table and not full_query.lstrip().startswith(table):
                     full_query = f"{table}\n| where {full_query}"
                 subquery_parts.append(f"(\n{full_query}\n)")
 
@@ -478,11 +479,13 @@ class KustoBackend(TextQueryBackend):
 
         Priority:
         1. ``rule._kusto_query_table`` — set by SetQueryTableStateTransformation (Python pipelines).
-        2. ``rule.custom_attributes['query_table']`` — set via ``set_custom_attribute`` in YAML pipelines.
+        2. active pipeline state ``query_table`` — set via YAML ``set_state`` transformations.
         """
         table = getattr(rule, "_kusto_query_table", None)
         if table is None:
-            table = getattr(rule, "custom_attributes", {}).get("query_table")
+            pipeline = getattr(self, "last_processing_pipeline", None)
+            if pipeline is not None:
+                table = pipeline.state.get("query_table")
         return table
 
     def _resolve_field_for_table(self, sigma_field: str, table: Optional[str], base_rule=None) -> str:
