@@ -7,7 +7,10 @@ from ..kusto_common.conditions import QueryTableSetCondition
 
 class PrependQueryTablePostprocessingTransformation(QueryPostprocessingTransformation):
     def apply(self, rule: SigmaRule, query: str) -> str:  # type: ignore # noqa: F821
-        return f"{self._pipeline.state['query_table']}\n| where {query}"
+        table = self._pipeline.state["query_table"]
+        if query.lstrip().startswith(table):
+            return query
+        return f"{table}\n| where {query}"
 
 
 def create_prepend_query_table_item():
