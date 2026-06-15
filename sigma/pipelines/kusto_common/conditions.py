@@ -13,4 +13,7 @@ class QueryTableSetCondition(RuleProcessingCondition):
         rule: Union[SigmaRule, SigmaCorrelationRule],
     ) -> bool:
         """Match condition on Sigma rule."""
+        # Multi-rule correlation includes table names inside each sub-query, so skip top-level prepend
+        if isinstance(rule, SigmaCorrelationRule) and len(rule.referenced_rules) > 1:
+            return False
         return self._pipeline.state.get("query_table", None) is not None

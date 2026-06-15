@@ -14,6 +14,7 @@ from sigma.processing.transformations import (
     DropDetectionItemTransformation,
     ReplaceStringTransformation,
     RuleFailureTransformation,
+    SetStateTransformation,
 )
 
 from ..kusto_common.errors import InvalidFieldTransformation
@@ -224,6 +225,10 @@ def sentinel_asim_pipeline(
     """
 
     pipeline_items = [
+        ProcessingItem(
+            identifier="sentinel_asim_set_timestamp_field",
+            transformation=SetStateTransformation(key="timestamp_field", val="TimeGenerated"),
+        ),
         ProcessingItem(
             identifier="sentinel_asim_set_query_table",
             transformation=SetQueryTableStateTransformation(

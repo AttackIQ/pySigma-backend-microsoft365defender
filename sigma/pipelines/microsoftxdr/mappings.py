@@ -76,6 +76,7 @@ MICROSOFT_XDR_FIELD_MAPPINGS = MicrosoftXDRFieldMappings(
             "CommandLine": "ProcessCommandLine",
             # CurrentDirectory: ?
             "User": "AccountName",
+            "ComputerName": "DeviceName",
             # LogonGuid: ?
             "LogonId": "LogonId",
             # TerminalSessionId: ?
@@ -108,6 +109,7 @@ MICROSOFT_XDR_FIELD_MAPPINGS = MicrosoftXDRFieldMappings(
             # 'Signature': ?
             # 'SignatureStatus': ?
             "User": "InitiatingProcessAccountName",
+            "ComputerName": "DeviceName",
         },
         "DeviceFileEvents": {  # file_*, Sysmon EventID 11 (create), 23 (delete) -> DeviceFileEvents table
             # 'ProcessGuid': ?,
@@ -116,6 +118,7 @@ MICROSOFT_XDR_FIELD_MAPPINGS = MicrosoftXDRFieldMappings(
             "TargetFilename": "FolderPath",
             # 'CreationUtcTime': 'Timestamp',
             "User": "RequestAccountName",
+            "ComputerName": "DeviceName",
             # 'Hashes': ?,
             "sha1": "SHA1",
             "sha256": "SHA256",
@@ -128,6 +131,7 @@ MICROSOFT_XDR_FIELD_MAPPINGS = MicrosoftXDRFieldMappings(
             "ProcessId": "InitiatingProcessId",
             "Image": "InitiatingProcessFolderPath",
             "User": "InitiatingProcessAccountName",
+            "ComputerName": "DeviceName",
             "Protocol": "Protocol",
             # 'Initiated': ?,
             # 'SourceIsIpv6': ?,
@@ -151,12 +155,14 @@ MICROSOFT_XDR_FIELD_MAPPINGS = MicrosoftXDRFieldMappings(
             # 'NewName': ?
             "Details": "RegistryValueData",
             "User": "InitiatingProcessAccountName",
+            "ComputerName": "DeviceName",
             "ObjectName": "RegistryKey",
         },
     },
     generic_mappings={
         "EventType": "ActionType",
         "User": "InitiatingProcessAccountName",
+        "ComputerName": "DeviceName",
         "CommandLine": "InitiatingProcessCommandLine",
         "Image": "InitiatingProcessFolderPath",
         "ProcessName": "InitiatingProcessFolderPath",

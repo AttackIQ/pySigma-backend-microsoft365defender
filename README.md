@@ -55,6 +55,7 @@ The **pySigma Kusto Backend** transforms Sigma Rules into queries using [Kusto Q
 - **Pipelines**: Provides `microsoft_xdr_pipeline`, `sentinelasim_pipeline`, and `azure_monitor_pipeline` for query tables and field renames
 - **Output**: Query strings in Kusto Query Language (KQL)
 - **pySigma v1.0.0+**: Fully compatible with pySigma v1.0.0+ using factory pattern for pipeline objects
+- **Correlation Rules**: Supports all Sigma correlation rules
 
 ### 🧑‍💻 Maintainer
 
@@ -176,6 +177,27 @@ pipeline = microsoft_xdr_pipeline(transform_parent_image=False)
 
 This argument allows fine-tuning of the ParentImage field mapping, which can be crucial for accurate rule conversion in certain scenarios. By default, it follows the behavior of mapping ParentImage to the parent process name, but setting it to `False` allows for mapping to the initiating process name instead.
 
+### ⏱️ Custom Timestamp Field
+
+Correlation rules use `bin(<timestamp_field>, <timespan>)` in their aggregation expressions. The timestamp field name differs depending on the target platform:
+
+| Pipeline | Timestamp field |
+|---|---|
+| `microsoft_xdr` | `Timestamp` |
+| `sentinelasim`, `azure_monitor`, none | `TimeGenerated` |
+
+This is set automatically when using the built-in pipelines. If you write a **custom YAML pipeline**, add a `set_state` transformation to declare the correct field:
+
+```yaml
+transformations:
+  - id: set_timestamp_field
+    type: set_state
+    key: timestamp_field
+    val: "TimeGenerated"   # or "Timestamp" for XDR
+```
+
+If no `timestamp_field` is set by any pipeline, the backend falls back to `Timestamp`.
+
 ### 🗃️ Custom Table Names (New in 0.3.0) (Beta)
 
 The `query_table` argument allows users to override table mappings and set custom table names.  This is useful for converting Sigma rules where the rule category does not easily map to the default table names.
@@ -236,6 +258,23 @@ Rules are supported if either:
 - A valid table name is supplied via the `query_table` parameter or YAML pipeline
 - The rule's logsource category is supported and mapped in the pipeline's `mappings.py` file
 - The rule has an `EventID` or `EventCode` field in the `detection` section, and the eventid is present in the pipeline's `eventid_to_table_mappings` dictionary
+
+#### Correlation Rule Support
+
+This backend supports all Sigma [correlation rules](https://github.com/SigmaHQ/sigma-specification/blob/main/specification/sigma-correlation-rules-specification.md#correlation-types):
+
+| Correlation type | KQL aggregation |
+|---|---|
+| `event_count` | `summarize EventCount = count() by bin(<timestamp>, <timespan>)` |
+| `value_count` | `summarize ValueCount = count_distinct(<field>) by bin(<timestamp>, <timespan>)` |
+| `value_avg` | `summarize ValueAvg = avg(<field>) by bin(<timestamp>, <timespan>)` |
+| `value_median` | `summarize ValueMedian = percentile(<field>, 50) by bin(<timestamp>, <timespan>)` |
+| `value_sum` | `summarize ValueSum = sum(<field>) by bin(<timestamp>, <timespan>)` |
+| `value_percentile` | `summarize ValuePercentile = percentile(<field>, <p>) by bin(<timestamp>, <timespan>)` |
+| `temporal` | `summarize TemporalCount = count_distinct(EventType) by bin(<timestamp>, <timespan>)` |
+| `temporal_ordered` | `summarize TemporalCount = count_distinct(EventType), <order_aggs> by bin(<timestamp>, <timespan>)` |
+
+Multi-rule correlations union the referenced sub-queries with `union`. The timestamp field used in `bin()` is set automatically by each pipeline (see [Custom Timestamp Field](#️-custom-timestamp-field) above).
 
 ### 🖥️ Commonly Supported Categories
 
